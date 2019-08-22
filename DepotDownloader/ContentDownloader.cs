@@ -347,11 +347,10 @@ namespace DepotDownloader
                     Password = loginKey == null ? password : null,
                     ShouldRememberPassword = Config.RememberPassword,
                     LoginKey = loginKey,
-                }
+                }, logger
             );
 
             steam3.GetSteamGC = sgc;
-            steam3.WriteLog = logger;
 
             steam3Credentials = steam3.WaitForCredentials();
 

@@ -68,8 +68,10 @@ namespace DepotDownloader
         public GetSteamGuardCode GetSteamGC = Console.ReadLine;
         public ContentDownloader.LogStuff WriteLog = Console.WriteLine;
 
-        public Steam3Session( SteamUser.LogOnDetails details )
+        public Steam3Session( SteamUser.LogOnDetails details, ContentDownloader.LogStuff logger = null)
         {
+            if (logger != null)
+                WriteLog = logger;
             this.logonDetails = details;
 
             this.authenticatedUser = details.Username != null;
@@ -544,7 +546,7 @@ namespace DepotDownloader
                 if ( is2FA )
                 {
                     WriteLog( "Please enter your 2 factor auth code from your authenticator app: " );
-                    logonDetails.TwoFactorCode = Console.ReadLine();
+                    logonDetails.TwoFactorCode = GetSteamGC();//Console.ReadLine();
                 }
                 else if ( isLoginKey )
                 {
@@ -561,7 +563,7 @@ namespace DepotDownloader
                     else
                     {
                         WriteLog( "Login key was expired. Please enter your password: " );
-                        logonDetails.Password = Util.ReadPassword();
+                        logonDetails.Password = GetSteamGC(); //Util.ReadPassword();
                     }
                 }
                 else
