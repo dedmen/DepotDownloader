@@ -7,11 +7,12 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DepotDownloader
 {
 
-    class Steam3Session
+    public class Steam3Session
     {
         public class Credentials
         {
@@ -63,6 +64,8 @@ namespace DepotDownloader
 
         static readonly TimeSpan STEAM3_TIMEOUT = TimeSpan.FromSeconds( 30 );
 
+        public delegate string GetSteamGuardCode();
+        public GetSteamGuardCode GetSteamGC = Console.ReadLine;
 
         public Steam3Session( SteamUser.LogOnDetails details )
         {
@@ -562,8 +565,9 @@ namespace DepotDownloader
                 }
                 else
                 {
+
                     Console.Write( "Please enter the authentication code sent to your email address: " );
-                    logonDetails.AuthCode = Console.ReadLine();
+                    logonDetails.AuthCode = GetSteamGC();
                 }
 
                 Console.Write( "Retrying Steam3 connection..." );

@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 
 namespace DepotDownloader
 {
-    class Program
+    public class Program
     {
         static void Main( string[] args )
             => MainAsync( args ).GetAwaiter().GetResult();
 
-        static async Task MainAsync( string[] args )
+        public static async Task MainAsync( string[] args )
         {
             if ( args.Length == 0 )
             {
@@ -171,7 +171,7 @@ namespace DepotDownloader
             // capture the supplied password in case we need to re-use it after checking the login key
             ContentDownloader.Config.SuppliedPassword = password;
 
-            return ContentDownloader.InitializeSteam3( username, password );
+            return ContentDownloader.InitializeSteam3( username, password, Console.ReadLine );
         }
 
         static int IndexOfParam( string[] args, string param )

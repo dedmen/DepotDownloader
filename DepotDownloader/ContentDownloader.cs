@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace DepotDownloader
 {
-    static class ContentDownloader
+    public static class ContentDownloader
     {
         public const uint INVALID_APP_ID = uint.MaxValue;
         public const uint INVALID_DEPOT_ID = uint.MaxValue;
@@ -19,6 +19,10 @@ namespace DepotDownloader
         public const string DEFAULT_BRANCH = "Public";
 
         public static DownloadConfig Config = new DownloadConfig();
+
+        public delegate void LogStuff(string m);
+
+        public static LogStuff WriteToLog = Console.WriteLine;
 
         private static Steam3Session steam3;
         private static Steam3Session.Credentials steam3Credentials;
@@ -213,8 +217,7 @@ namespace DepotDownloader
                 if ( otherAppId == appId )
                 {
                     // This shouldn't ever happen, but ya never know with Valve. Don't infinite loop.
-                    Console.WriteLine( "App {0}, Depot {1} has depotfromapp of {2}!",
-                        appId, depotId, otherAppId );
+                    WriteToLog($"App {appId}, Depot {depotId} has depotfromapp of {otherAppId}!");
                     return INVALID_MANIFEST_ID;
                 }
 
@@ -253,7 +256,7 @@ namespace DepotDownloader
 
                         if ( manifest_bytes == null )
                         {
-                            Console.WriteLine( "Password was invalid for branch {0}", branch );
+                            WriteToLog($"Password was invalid for branch {branch}");
                             return INVALID_MANIFEST_ID;
                         }
 
@@ -266,7 +269,7 @@ namespace DepotDownloader
 
                         if ( !steam3.AppBetaPasswords.ContainsKey( branch ) )
                         {
-                            Console.WriteLine( "Password was invalid for branch {0}", branch );
+                            WriteToLog($"Password was invalid for branch {branch}");
                             return INVALID_MANIFEST_ID;
                         }
 
@@ -278,7 +281,7 @@ namespace DepotDownloader
                         }
                         catch ( Exception e )
                         {
-                            Console.WriteLine( "Failed to decrypt branch {0}: {1}", branch, e.Message );
+                            WriteToLog($"Failed to decrypt branch {branch}: {e.Message}");
                             return INVALID_MANIFEST_ID;
                         }
 
@@ -286,7 +289,7 @@ namespace DepotDownloader
                     }
                     else
                     {
-                        Console.WriteLine( "Unhandled depot encryption for depotId {0}", depotId );
+                        WriteToLog($"Unhandled depot encryption for depotId {depotId}");
                         return INVALID_MANIFEST_ID;
                     }
 
@@ -328,7 +331,7 @@ namespace DepotDownloader
             }
         }
 
-        public static bool InitializeSteam3( string username, string password )
+        public static bool InitializeSteam3( string username, string password, Steam3Session.GetSteamGuardCode sgc )
         {
             string loginKey = null;
 
@@ -347,11 +350,13 @@ namespace DepotDownloader
                 }
             );
 
+            steam3.GetSteamGC = sgc;
+
             steam3Credentials = steam3.WaitForCredentials();
 
             if ( !steam3Credentials.IsValid )
             {
-                Console.WriteLine( "Unable to get steam3 credentials." );
+                WriteToLog("Unable to get steam3 credentials.");
                 return false;
             }
 
@@ -384,7 +389,7 @@ namespace DepotDownloader
             }
             else
             {
-                Console.WriteLine( "Unable to locate manifest ID for published file {0}", publishedFileId );
+                WriteToLog($"Unable to locate manifest ID for published file {publishedFileId}");
             }
         }
 
@@ -397,12 +402,12 @@ namespace DepotDownloader
             {
                 if ( steam3.RequestFreeAppLicense( appId ) )
                 {
-                    Console.WriteLine( "Obtained FreeOnDemand license for app {0}", appId );
+                    WriteToLog($"Obtained FreeOnDemand license for app {appId}");
                 }
                 else
                 {
                     string contentName = GetAppOrDepotName( INVALID_DEPOT_ID, appId );
-                    Console.WriteLine( "App {0} ({1}) is not available from this account.", appId, contentName );
+                    WriteToLog($"App {appId} ({contentName}) is not available from this account.");
                     return;
                 }
             }
@@ -420,7 +425,7 @@ namespace DepotDownloader
             }
             else
             {
-                Console.WriteLine( "Using app branch: '{0}'.", branch );
+                WriteToLog($"Using app branch: '{branch}'.");
 
                 if ( depots != null )
                 {
@@ -452,13 +457,12 @@ namespace DepotDownloader
                 }
                 if ( depotIDs == null || ( depotIDs.Count == 0 && depotId == INVALID_DEPOT_ID ) )
                 {
-                    Console.WriteLine( "Couldn't find any depots to download for app {0}", appId );
+                    WriteToLog($"Couldn't find any depots to download for app {appId}");
                     return;
                 }
                 else if ( depotIDs.Count == 0 )
                 {
-                    Console.Write( "Depot {0} not listed for app {1}", depotId, appId );
-                    Console.WriteLine();
+                    WriteToLog($"Depot {depotId} not listed for app {appId}");
                     return;
                 }
             }
@@ -480,7 +484,7 @@ namespace DepotDownloader
             }
             catch ( OperationCanceledException )
             {
-                Console.WriteLine( "App {0} was not completely downloaded.", appId );
+                WriteToLog($"App {appId} was not completely downloaded.");
             }
         }
 
@@ -493,7 +497,7 @@ namespace DepotDownloader
 
             if ( !AccountHasAccess( depotId ) )
             {
-                Console.WriteLine( "Depot {0} ({1}) is not available from this account.", depotId, contentName );
+                WriteToLog($"Depot {depotId} ({contentName}) is not available from this account.");
 
                 return null;
             }
@@ -506,14 +510,15 @@ namespace DepotDownloader
                 manifestId = GetSteam3DepotManifest(depotId, appId, branch);
                 if (manifestId == INVALID_MANIFEST_ID && branch != "public")
                 {
-                    Console.WriteLine("Warning: Depot {0} does not have branch named \"{1}\". Trying public branch.", depotId, branch);
+                    WriteToLog(
+                        $"Warning: Depot {depotId} does not have branch named \"{branch}\". Trying public branch.");
                     branch = "public";
                     manifestId = GetSteam3DepotManifest(depotId, appId, branch);
                 }
 
                 if (manifestId == INVALID_MANIFEST_ID)
                 {
-                    Console.WriteLine("Depot {0} ({1}) missing public subsection or manifest section.", depotId, contentName);
+                    WriteToLog($"Depot {depotId} ({contentName}) missing public subsection or manifest section.");
                     return null;
                 }
             }
@@ -523,14 +528,14 @@ namespace DepotDownloader
             string installDir;
             if ( !CreateDirectories( depotId, uVersion, out installDir ) )
             {
-                Console.WriteLine( "Error: Unable to create install directories!" );
+                WriteToLog( "Error: Unable to create install directories!" );
                 return null;
             }
 
             steam3.RequestDepotKey( depotId, appId );
             if ( !steam3.DepotKeys.ContainsKey( depotId ) )
             {
-                Console.WriteLine( "No valid depot key for {0}, unable to download.", depotId );
+                WriteToLog($"No valid depot key for {depotId}, unable to download.");
                 return null;
             }
 
@@ -562,7 +567,7 @@ namespace DepotDownloader
                 ulong DepotBytesCompressed = 0;
                 ulong DepotBytesUncompressed = 0;
 
-                Console.WriteLine( "Downloading depot {0} - {1}", depot.id, depot.contentName );
+                WriteToLog($"Downloading depot {depot.id} - {depot.contentName}");
 
                 CancellationTokenSource cts = new CancellationTokenSource();
                 cdnPool.ExhaustedToken = cts;
@@ -580,7 +585,7 @@ namespace DepotDownloader
 
                 if ( lastManifestId != INVALID_MANIFEST_ID )
                 {
-                    var oldManifestFileName = Path.Combine( configDir, string.Format( "{0}.bin", lastManifestId ) );
+                    var oldManifestFileName = Path.Combine( configDir, $"{lastManifestId}.bin");
                     if ( File.Exists( oldManifestFileName ) )
                         oldProtoManifest = ProtoManifest.LoadFromFile( oldManifestFileName );
                 }
@@ -588,11 +593,11 @@ namespace DepotDownloader
                 if ( lastManifestId == depot.manifestId && oldProtoManifest != null )
                 {
                     newProtoManifest = oldProtoManifest;
-                    Console.WriteLine( "Already have manifest {0} for depot {1}.", depot.manifestId, depot.id );
+                    WriteToLog($"Already have manifest {depot.manifestId} for depot {depot.id}.");
                 }
                 else
                 {
-                    var newManifestFileName = Path.Combine( configDir, string.Format( "{0}.bin", depot.manifestId ) );
+                    var newManifestFileName = Path.Combine( configDir, $"{depot.manifestId}.bin");
                     if ( newManifestFileName != null )
                     {
                         newProtoManifest = ProtoManifest.LoadFromFile( newManifestFileName );
@@ -600,11 +605,11 @@ namespace DepotDownloader
 
                     if ( newProtoManifest != null )
                     {
-                        Console.WriteLine( "Already have manifest {0} for depot {1}.", depot.manifestId, depot.id );
+                        WriteToLog($"Already have manifest {depot.manifestId} for depot {depot.id}.");
                     }
                     else
                     {
-                        Console.Write( "Downloading depot manifest..." );
+                        WriteToLog( "Downloading depot manifest..." );
 
                         DepotManifest depotManifest = null;
 
@@ -628,36 +633,40 @@ namespace DepotDownloader
                                     var response = e.Response as HttpWebResponse;
                                     if ( response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden )
                                     {
-                                        Console.WriteLine( "Encountered 401 for depot manifest {0} {1}. Aborting.", depot.id, depot.manifestId );
+                                        WriteToLog(
+                                            $"Encountered 401 for depot manifest {depot.id} {depot.manifestId}. Aborting.");
                                         break;
                                     }
                                     else
                                     {
-                                        Console.WriteLine( "Encountered error downloading depot manifest {0} {1}: {2}", depot.id, depot.manifestId, response.StatusCode );
+                                        WriteToLog(
+                                            $"Encountered error downloading depot manifest {depot.id} {depot.manifestId}: {response.StatusCode}");
                                     }
                                 }
                                 else
                                 {
-                                    Console.WriteLine( "Encountered error downloading manifest for depot {0} {1}: {2}", depot.id, depot.manifestId, e.Status );
+                                    WriteToLog(
+                                        $"Encountered error downloading manifest for depot {depot.id} {depot.manifestId}: {e.Status}");
                                 }
                             }
                             catch ( Exception e )
                             {
                                 cdnPool.ReturnBrokenConnection( client );
-                                Console.WriteLine( "Encountered error downloading manifest for depot {0} {1}: {2}", depot.id, depot.manifestId, e.Message );
+                                WriteToLog(
+                                    $"Encountered error downloading manifest for depot {depot.id} {depot.manifestId}: {e.Message}");
                             }
                         }
 
                         if ( depotManifest == null )
                         {
-                            Console.WriteLine( "\nUnable to download manifest {0} for depot {1}", depot.manifestId, depot.id );
+                            WriteToLog($"\nUnable to download manifest {depot.manifestId} for depot {depot.id}");
                             return;
                         }
 
                         newProtoManifest = new ProtoManifest( depotManifest, depot.manifestId );
                         newProtoManifest.SaveToFile( newManifestFileName );
 
-                        Console.WriteLine( " Done!" );
+                        WriteToLog( " Done!" );
                     }
                 }
 
@@ -666,14 +675,14 @@ namespace DepotDownloader
                 if ( Config.DownloadManifestOnly )
                 {
                     StringBuilder manifestBuilder = new StringBuilder();
-                    string txtManifest = Path.Combine( depot.installDir, string.Format( "manifest_{0}.txt", depot.id ) );
+                    string txtManifest = Path.Combine( depot.installDir, $"manifest_{depot.id}.txt");
 
                     foreach ( var file in newProtoManifest.Files )
                     {
                         if ( file.Flags.HasFlag( EDepotFileFlag.Directory ) )
                             continue;
 
-                        manifestBuilder.Append( string.Format( "{0}\n", file.FileName ) );
+                        manifestBuilder.Append($"{file.FileName}\n");
                     }
 
                     File.WriteAllText( txtManifest, manifestBuilder.ToString() );
@@ -819,7 +828,8 @@ namespace DepotDownloader
                                 if ( neededChunks.Count() == 0 )
                                 {
                                     size_downloaded += file.TotalSize;
-                                    Console.WriteLine( "{0,6:#00.00}% {1}", ( ( float )size_downloaded / ( float )complete_download_size ) * 100.0f, fileFinalPath );
+                                    WriteToLog(
+                                        $"{((float) size_downloaded / (float) complete_download_size) * 100.0f,6:#00.00}% {fileFinalPath}");
                                     if ( fs != null )
                                         fs.Dispose();
                                     return;
@@ -871,30 +881,33 @@ namespace DepotDownloader
                                             var response = e.Response as HttpWebResponse;
                                             if ( response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden )
                                             {
-                                                Console.WriteLine( "Encountered 401 for chunk {0}. Aborting.", chunkID );
+                                                WriteToLog($"Encountered 401 for chunk {chunkID}. Aborting.");
                                                 cts.Cancel();
                                                 break;
                                             }
                                             else
                                             {
-                                                Console.WriteLine( "Encountered error downloading chunk {0}: {1}", chunkID, response.StatusCode );
+                                                WriteToLog(
+                                                    $"Encountered error downloading chunk {chunkID}: {response.StatusCode}");
                                             }
                                         }
                                         else
                                         {
-                                            Console.WriteLine( "Encountered error downloading chunk {0}: {1}", chunkID, e.Status );
+                                            WriteToLog($"Encountered error downloading chunk {chunkID}: {e.Status}");
                                         }
                                     }
                                     catch ( Exception e )
                                     {
                                         cdnPool.ReturnBrokenConnection( client );
-                                        Console.WriteLine( "Encountered unexpected error downloading chunk {0}: {1}", chunkID, e.Message );
+                                        WriteToLog(
+                                            $"Encountered unexpected error downloading chunk {chunkID}: {e.Message}");
                                     }
                                 }
 
                                 if ( chunkData == null )
                                 {
-                                    Console.WriteLine( "Failed to find any server with chunk {0} for depot {1}. Aborting.", chunkID, depot.id );
+                                    WriteToLog(
+                                        $"Failed to find any server with chunk {chunkID} for depot {depot.id}. Aborting.");
                                     cts.Cancel();
                                     return;
                                 }
@@ -912,7 +925,8 @@ namespace DepotDownloader
 
                             fs.Dispose();
 
-                            Console.WriteLine( "{0,6:#00.00}% {1}", ( ( float )size_downloaded / ( float )complete_download_size ) * 100.0f, fileFinalPath );
+                            WriteToLog(
+                                $"{((float) size_downloaded / (float) complete_download_size) * 100.0f,6:#00.00}% {fileFinalPath}");
                         }
                         finally
                         {
@@ -928,10 +942,12 @@ namespace DepotDownloader
                 ConfigStore.TheConfig.LastManifests[ depot.id ] = depot.manifestId;
                 ConfigStore.Save();
 
-                Console.WriteLine( "Depot {0} - Downloaded {1} bytes ({2} bytes uncompressed)", depot.id, DepotBytesCompressed, DepotBytesUncompressed );
+                WriteToLog(
+                    $"Depot {depot.id} - Downloaded {DepotBytesCompressed} bytes ({DepotBytesUncompressed} bytes uncompressed)");
             }
 
-            Console.WriteLine( "Total downloaded: {0} bytes ({1} bytes uncompressed) from {2} depots", TotalBytesCompressed, TotalBytesUncompressed, depots.Count );
+            WriteToLog(
+                $"Total downloaded: {TotalBytesCompressed} bytes ({TotalBytesUncompressed} bytes uncompressed) from {depots.Count} depots");
         }
     }
 }

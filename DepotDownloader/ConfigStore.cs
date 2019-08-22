@@ -7,7 +7,7 @@ using System.IO.Compression;
 namespace DepotDownloader
 {
     [ProtoContract]
-    class ConfigStore
+    public class ConfigStore
     {
         [ProtoMember(1)]
         public Dictionary<uint, ulong> LastManifests { get; private set; }
