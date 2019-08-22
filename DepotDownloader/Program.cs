@@ -171,7 +171,7 @@ namespace DepotDownloader
             // capture the supplied password in case we need to re-use it after checking the login key
             ContentDownloader.Config.SuppliedPassword = password;
 
-            return ContentDownloader.InitializeSteam3( username, password, Console.ReadLine );
+            return ContentDownloader.InitializeSteam3( username, password, Console.ReadLine, Console.WriteLine );
         }
 
         static int IndexOfParam( string[] args, string param )

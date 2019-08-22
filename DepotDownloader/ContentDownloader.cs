@@ -331,7 +331,7 @@ namespace DepotDownloader
             }
         }
 
-        public static bool InitializeSteam3( string username, string password, Steam3Session.GetSteamGuardCode sgc )
+        public static bool InitializeSteam3( string username, string password, Steam3Session.GetSteamGuardCode sgc, LogStuff logger )
         {
             string loginKey = null;
 
@@ -351,6 +351,7 @@ namespace DepotDownloader
             );
 
             steam3.GetSteamGC = sgc;
+            steam3.WriteLog = logger;
 
             steam3Credentials = steam3.WaitForCredentials();
 
