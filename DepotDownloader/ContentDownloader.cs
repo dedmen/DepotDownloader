@@ -337,7 +337,7 @@ namespace DepotDownloader
         {
             string loginKey = null;
 
-            if (username != null && Config.RememberPassword)
+            if (username != null && Config.RememberPassword && AccountSettingsStore.Loaded)
             {
                 _ = AccountSettingsStore.Instance.LoginKeys.TryGetValue(username, out loginKey);
             }

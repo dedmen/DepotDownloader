@@ -97,7 +97,8 @@ namespace DepotDownloader
                         .Select(server =>
                         {
                             var penalty = 0;
-                            //AccountSettingsStore.Instance.ContentServerPenalty.TryGetValue(server.Host, out var penalty);
+                            if (AccountSettingsStore.Loaded)
+                                AccountSettingsStore.Instance.ContentServerPenalty.TryGetValue(server.Host, out penalty);
 
                             return (server, penalty);
                         })

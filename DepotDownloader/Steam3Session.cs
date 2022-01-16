@@ -123,21 +123,21 @@ namespace DepotDownloader
 
             WriteLog("Connecting to Steam3...");
 
-            //if (authenticatedUser)
-            //{
-            //    var fi = new FileInfo(String.Format("{0}.sentryFile", logonDetails.Username));
-            //    if (AccountSettingsStore.Instance.SentryData != null && AccountSettingsStore.Instance.SentryData.ContainsKey(logonDetails.Username))
-            //    {
-            //        logonDetails.SentryFileHash = Util.SHAHash(AccountSettingsStore.Instance.SentryData[logonDetails.Username]);
-            //    }
-            //    else if (fi.Exists && fi.Length > 0)
-            //    {
-            //        var sentryData = File.ReadAllBytes(fi.FullName);
-            //        logonDetails.SentryFileHash = Util.SHAHash(sentryData);
-            //        AccountSettingsStore.Instance.SentryData[logonDetails.Username] = sentryData;
-            //        AccountSettingsStore.Save();
-            //    }
-            //}
+            if (authenticatedUser && AccountSettingsStore.Loaded)
+            {
+                var fi = new FileInfo(String.Format("{0}.sentryFile", logonDetails.Username));
+                if (AccountSettingsStore.Instance.SentryData != null && AccountSettingsStore.Instance.SentryData.ContainsKey(logonDetails.Username))
+                {
+                    logonDetails.SentryFileHash = Util.SHAHash(AccountSettingsStore.Instance.SentryData[logonDetails.Username]);
+                }
+                else if (fi.Exists && fi.Length > 0)
+                {
+                    var sentryData = File.ReadAllBytes(fi.FullName);
+                    logonDetails.SentryFileHash = Util.SHAHash(sentryData);
+                    AccountSettingsStore.Instance.SentryData[logonDetails.Username] = sentryData;
+                    AccountSettingsStore.Save();
+                }
+            }
 
             Connect();
         }
@@ -610,8 +610,11 @@ namespace DepotDownloader
                 }
                 else if (isLoginKey)
                 {
-                    //AccountSettingsStore.Instance.LoginKeys.Remove(logonDetails.Username);
-                    //AccountSettingsStore.Save();
+                    if (AccountSettingsStore.Loaded)
+                    {
+                        AccountSettingsStore.Instance.LoginKeys.Remove(logonDetails.Username);
+                        AccountSettingsStore.Save();
+                    }
 
                     logonDetails.LoginKey = null;
 
@@ -708,9 +711,13 @@ namespace DepotDownloader
             var hash = Util.SHAHash(machineAuth.Data);
             WriteLog($"Got Machine Auth: {machineAuth.FileName} {machineAuth.Offset} {machineAuth.BytesToWrite} {machineAuth.Data.Length}");
 
-            //AccountSettingsStore.Instance.SentryData[logonDetails.Username] = machineAuth.Data;
-            //AccountSettingsStore.Save();
 
+            if (AccountSettingsStore.Loaded)
+            {
+                AccountSettingsStore.Instance.SentryData[logonDetails.Username] = machineAuth.Data;
+                AccountSettingsStore.Save();
+            }
+            
             var authResponse = new SteamUser.MachineAuthDetails
             {
                 BytesWritten = machineAuth.BytesToWrite,

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -29,7 +29,7 @@ namespace DepotDownloader
             LoginKeys = new Dictionary<string, string>();
         }
 
-        static bool Loaded
+        public static bool Loaded
         {
             get { return Instance != null; }
         }
