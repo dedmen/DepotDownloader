@@ -121,23 +121,23 @@ namespace DepotDownloader
             this.callbacks.Subscribe<SteamUser.UpdateMachineAuthCallback>(UpdateMachineAuthCallback);
             this.callbacks.Subscribe<SteamUser.LoginKeyCallback>(LoginKeyCallback);
 
-            Console.Write("Connecting to Steam3...");
+            WriteLog("Connecting to Steam3...");
 
-            if (authenticatedUser)
-            {
-                var fi = new FileInfo(String.Format("{0}.sentryFile", logonDetails.Username));
-                if (AccountSettingsStore.Instance.SentryData != null && AccountSettingsStore.Instance.SentryData.ContainsKey(logonDetails.Username))
-                {
-                    logonDetails.SentryFileHash = Util.SHAHash(AccountSettingsStore.Instance.SentryData[logonDetails.Username]);
-                }
-                else if (fi.Exists && fi.Length > 0)
-                {
-                    var sentryData = File.ReadAllBytes(fi.FullName);
-                    logonDetails.SentryFileHash = Util.SHAHash(sentryData);
-                    AccountSettingsStore.Instance.SentryData[logonDetails.Username] = sentryData;
-                    AccountSettingsStore.Save();
-                }
-            }
+            //if (authenticatedUser)
+            //{
+            //    var fi = new FileInfo(String.Format("{0}.sentryFile", logonDetails.Username));
+            //    if (AccountSettingsStore.Instance.SentryData != null && AccountSettingsStore.Instance.SentryData.ContainsKey(logonDetails.Username))
+            //    {
+            //        logonDetails.SentryFileHash = Util.SHAHash(AccountSettingsStore.Instance.SentryData[logonDetails.Username]);
+            //    }
+            //    else if (fi.Exists && fi.Length > 0)
+            //    {
+            //        var sentryData = File.ReadAllBytes(fi.FullName);
+            //        logonDetails.SentryFileHash = Util.SHAHash(sentryData);
+            //        AccountSettingsStore.Instance.SentryData[logonDetails.Username] = sentryData;
+            //        AccountSettingsStore.Save();
+            //    }
+            //}
 
             Connect();
         }
@@ -541,12 +541,12 @@ namespace DepotDownloader
             bConnected = true;
             if (!authenticatedUser)
             {
-                Console.Write("Logging anonymously into Steam3...");
+                WriteLog("Logging anonymously into Steam3...");
                 steamUser.LogOnAnonymous();
             }
             else
             {
-                Console.Write($"Logging '{logonDetails.Username}' into Steam3...");
+                WriteLog($"Logging '{logonDetails.Username}' into Steam3...");
                 steamUser.LogOn(logonDetails);
             }
         }
@@ -605,13 +605,13 @@ namespace DepotDownloader
 
                 if (is2FA)
                 {
-                    Console.Write("Please enter your 2 factor auth code from your authenticator app: ");
+                    WriteLog("Please enter your 2 factor auth code from your authenticator app: ");
                     logonDetails.TwoFactorCode = GetSteamGC();
                 }
                 else if (isLoginKey)
                 {
-                    AccountSettingsStore.Instance.LoginKeys.Remove(logonDetails.Username);
-                    AccountSettingsStore.Save();
+                    //AccountSettingsStore.Instance.LoginKeys.Remove(logonDetails.Username);
+                    //AccountSettingsStore.Save();
 
                     logonDetails.LoginKey = null;
 
@@ -622,17 +622,17 @@ namespace DepotDownloader
                     }
                     else
                     {
-                        Console.Write("Login key was expired. Please enter your password: ");
+                        WriteLog("Login key was expired. Please enter your password: ");
                         logonDetails.Password = GetSteamGC();
                     }
                 }
                 else
                 {
-                    Console.Write("Please enter the authentication code sent to your email address: ");
+                    WriteLog("Please enter the authentication code sent to your email address: ");
                     logonDetails.AuthCode = GetSteamGC();
                 }
 
-                Console.Write("Retrying Steam3 connection...");
+                WriteLog("Retrying Steam3 connection...");
                 Connect();
 
                 return;
@@ -640,7 +640,7 @@ namespace DepotDownloader
 
             if (loggedOn.Result == EResult.TryAnotherCM)
             {
-                Console.Write("Retrying Steam3 connection (TryAnotherCM)...");
+                WriteLog("Retrying Steam3 connection (TryAnotherCM)...");
 
                 Reconnect();
 
@@ -708,8 +708,8 @@ namespace DepotDownloader
             var hash = Util.SHAHash(machineAuth.Data);
             WriteLog($"Got Machine Auth: {machineAuth.FileName} {machineAuth.Offset} {machineAuth.BytesToWrite} {machineAuth.Data.Length}");
 
-            AccountSettingsStore.Instance.SentryData[logonDetails.Username] = machineAuth.Data;
-            AccountSettingsStore.Save();
+            //AccountSettingsStore.Instance.SentryData[logonDetails.Username] = machineAuth.Data;
+            //AccountSettingsStore.Save();
 
             var authResponse = new SteamUser.MachineAuthDetails
             {
@@ -736,8 +736,8 @@ namespace DepotDownloader
         {
             WriteLog($"Accepted new login key for account {logonDetails.Username}");
 
-            AccountSettingsStore.Instance.LoginKeys[logonDetails.Username] = loginKey.LoginKey;
-            AccountSettingsStore.Save();
+            //AccountSettingsStore.Instance.LoginKeys[logonDetails.Username] = loginKey.LoginKey;
+            //AccountSettingsStore.Save();
 
             steamUser.AcceptNewLoginKey(loginKey);
 
