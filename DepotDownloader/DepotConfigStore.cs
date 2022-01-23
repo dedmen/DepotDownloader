@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -19,7 +19,7 @@ namespace DepotDownloader
             InstalledManifestIDs = new Dictionary<uint, ulong>();
         }
 
-        static bool Loaded
+        public static bool Loaded
         {
             get { return Instance != null; }
         }
