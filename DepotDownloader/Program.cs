@@ -319,7 +319,7 @@ namespace DepotDownloader
                 }
             }
             
-            return ContentDownloader.InitializeSteam3(username, password, Console.ReadLine, Console.WriteLine);
+            return ContentDownloader.InitializeSteam3(username, password, Console.ReadLine, Console.WriteLine, null);
         }
 
         static int IndexOfParam(string[] args, string param)

@@ -62,7 +62,8 @@ namespace DepotDownloader
 
         public delegate string GetSteamGuardCode();
         public GetSteamGuardCode GetSteamGC = Console.ReadLine;
-        public ContentDownloader.LogStuff WriteLog = Console.WriteLine;
+        public static ContentDownloader.LogStuff WriteLog = Console.WriteLine;
+        public IAuthenticator Authenticator = new UserConsoleAuthenticator();
 
 
         public Steam3Session(SteamUser.LogOnDetails details, ContentDownloader.LogStuff logger = null)
@@ -486,7 +487,7 @@ namespace DepotDownloader
             {
                 if (logonDetails.Username != null)
                 {
-                    Console.WriteLine("Logging '{0}' into Steam3...", logonDetails.Username);
+                    WriteLog($"Logging '{logonDetails.Username}' into Steam3...");
                 }
 
                 if (authSession is null)
@@ -502,7 +503,7 @@ namespace DepotDownloader
                                 Password = logonDetails.Password,
                                 IsPersistentSession = ContentDownloader.Config.RememberPassword,
                                 GuardData = guarddata,
-                                Authenticator = new UserConsoleAuthenticator(),
+                                Authenticator = Authenticator,
                             });
                         }
                         catch (TaskCanceledException)
@@ -518,14 +519,14 @@ namespace DepotDownloader
                     }
                     else if (logonDetails.AccessToken is null && ContentDownloader.Config.UseQrCode)
                     {
-                        Console.WriteLine("Logging in with QR code...");
+                        WriteLog("Logging in with QR code...");
 
                         try
                         {
                             var session = await steamClient.Authentication.BeginAuthSessionViaQRAsync(new AuthSessionDetails
                             {
                                 IsPersistentSession = ContentDownloader.Config.RememberPassword,
-                                Authenticator = new UserConsoleAuthenticator(),
+                                Authenticator = Authenticator,
                             });
 
                             authSession = session;
@@ -534,7 +535,7 @@ namespace DepotDownloader
                             session.ChallengeURLChanged = () =>
                             {
                                 Console.WriteLine();
-                                Console.WriteLine("The QR code has changed:");
+                                WriteLog("The QR code has changed:");
 
                                 DisplayQrCode(session.ChallengeURL);
                             };
@@ -668,7 +669,7 @@ namespace DepotDownloader
                     AccountSettingsStore.Save();
 
                     // TODO: Handle gracefully by falling back to password prompt?
-                    Console.WriteLine($"Access token was rejected ({loggedOn.Result}).");
+                    WriteLog($"Access token was rejected ({loggedOn.Result}).");
                     Abort(false);
                     return;
                 }
@@ -754,8 +755,8 @@ namespace DepotDownloader
             using var qrCode = new AsciiQRCode(qrCodeData);
             var qrCodeAsAsciiArt = qrCode.GetGraphic(1, drawQuietZones: false);
 
-            Console.WriteLine("Use the Steam Mobile App to sign in with this QR code:");
-            Console.WriteLine(qrCodeAsAsciiArt);
+            WriteLog("Use the Steam Mobile App to sign in with this QR code:");
+            WriteLog(qrCodeAsAsciiArt);
         }
     }
 }

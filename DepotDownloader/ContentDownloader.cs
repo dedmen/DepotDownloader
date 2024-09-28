@@ -11,6 +11,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
+using SteamKit2.Authentication;
 using SteamKit2.CDN;
 
 namespace DepotDownloader
@@ -30,7 +31,7 @@ namespace DepotDownloader
 
         public delegate void LogStuff(string m);
 
-        public static LogStuff WriteToLog = WriteToLog;
+        public static LogStuff WriteToLog = null;
 
         private static Steam3Session steam3;
         private static CDNClientPool cdnPool;
@@ -284,7 +285,7 @@ namespace DepotDownloader
             return info["name"].AsString();
         }
 
-        public static bool InitializeSteam3(string username, string password, Steam3Session.GetSteamGuardCode sgc, LogStuff logger)
+        public static bool InitializeSteam3(string username, string password, Steam3Session.GetSteamGuardCode sgc, LogStuff logger, IAuthenticator auther)
         {
             string loginToken = null;
 
@@ -305,6 +306,9 @@ namespace DepotDownloader
             );
 
             steam3.GetSteamGC = sgc;
+            WriteToLog = logger;
+            if (auther != null)
+                steam3.Authenticator = auther;
 
             if (!steam3.WaitForCredentials())
             {
