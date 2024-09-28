@@ -1,4 +1,7 @@
-﻿using System;
+// This file is subject to the terms and conditions defined
+// in file 'LICENSE', which is part of this source code package.
+
+using System;
 using System.Diagnostics.Tracing;
 using System.Text;
 
@@ -35,7 +38,7 @@ namespace DepotDownloader
                 }
             }
 
-            sb.Append(")");
+            sb.Append(')');
             Console.WriteLine(sb.ToString());
         }
     }

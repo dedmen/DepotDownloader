@@ -1,7 +1,11 @@
-﻿using System;
+// This file is subject to the terms and conditions defined
+// in file 'LICENSE', which is part of this source code package.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Security.Cryptography;
 using ProtoBuf;
 using SteamKit2;
 
@@ -13,7 +17,7 @@ namespace DepotDownloader
         // Proto ctor
         private ProtoManifest()
         {
-            Files = new List<FileData>();
+            Files = [];
         }
 
         public ProtoManifest(DepotManifest sourceManifest, ulong id) : this()
@@ -29,7 +33,7 @@ namespace DepotDownloader
             // Proto ctor
             private FileData()
             {
-                Chunks = new List<ChunkData>();
+                Chunks = [];
             }
 
             public FileData(DepotManifest.FileData sourceData) : this()
@@ -75,7 +79,7 @@ namespace DepotDownloader
             public ChunkData(DepotManifest.ChunkData sourceChunk)
             {
                 ChunkID = sourceChunk.ChunkID;
-                Checksum = sourceChunk.Checksum;
+                Checksum = BitConverter.GetBytes(sourceChunk.Checksum);
                 Offset = sourceChunk.Offset;
                 CompressedLength = sourceChunk.CompressedLength;
                 UncompressedLength = sourceChunk.UncompressedLength;
@@ -129,33 +133,29 @@ namespace DepotDownloader
                 return null;
             }
 
-            using (var ms = new MemoryStream())
-            {
-                using (var fs = File.Open(filename, FileMode.Open))
-                using (var ds = new DeflateStream(fs, CompressionMode.Decompress))
-                    ds.CopyTo(ms);
+            using var ms = new MemoryStream();
+            using (var fs = File.Open(filename, FileMode.Open))
+            using (var ds = new DeflateStream(fs, CompressionMode.Decompress))
+                ds.CopyTo(ms);
 
-                checksum = Util.SHAHash(ms.ToArray());
+            checksum = SHA1.HashData(ms.ToArray());
 
-                ms.Seek(0, SeekOrigin.Begin);
-                return Serializer.Deserialize<ProtoManifest>(ms);
-            }
+            ms.Seek(0, SeekOrigin.Begin);
+            return Serializer.Deserialize<ProtoManifest>(ms);
         }
 
         public void SaveToFile(string filename, out byte[] checksum)
         {
-            using (var ms = new MemoryStream())
-            {
-                Serializer.Serialize(ms, this);
+            using var ms = new MemoryStream();
+            Serializer.Serialize(ms, this);
 
-                checksum = Util.SHAHash(ms.ToArray());
+            checksum = SHA1.HashData(ms.ToArray());
 
-                ms.Seek(0, SeekOrigin.Begin);
+            ms.Seek(0, SeekOrigin.Begin);
 
-                using (var fs = File.Open(filename, FileMode.Create))
-                using (var ds = new DeflateStream(fs, CompressionMode.Compress))
-                    ms.CopyTo(ds);
-            }
+            using var fs = File.Open(filename, FileMode.Create);
+            using var ds = new DeflateStream(fs, CompressionMode.Compress);
+            ms.CopyTo(ds);
         }
     }
 }
