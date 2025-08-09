@@ -255,7 +255,7 @@ namespace DepotDownloader
 
             var depotKey = await steamApps.GetDepotDecryptionKey(depotId, appid);
 
-            WriteLog("Got depot key for {0} result: {1}", depotKey.DepotID, depotKey.Result);
+            WriteLog($"Got depot key for {depotKey.DepotID} result: {depotKey.Result}");
 
             if (depotKey.Result != EResult.OK)
             {
@@ -318,7 +318,7 @@ namespace DepotDownloader
         {
             var appPassword = await steamApps.CheckAppBetaPassword(appid, password);
 
-            WriteLog("Retrieved {0} beta keys with result: {1}", appPassword.BetaPasswords.Count, appPassword.Result);
+            WriteLog($"Retrieved {appPassword.BetaPasswords.Count} beta keys with result: {appPassword.Result}");
 
             foreach (var entry in appPassword.BetaPasswords)
             {

@@ -742,7 +742,7 @@ namespace DepotDownloader
             if (lastManifestId == depot.ManifestId && oldManifest != null)
             {
                 newManifest = oldManifest;
-                WriteToLog("Already have manifest {0} for depot {1}.", depot.ManifestId, depot.DepotId);
+                WriteToLog($"Already have manifest {depot.ManifestId} for depot {depot.DepotId}.");
             }
             else
             {
@@ -869,7 +869,7 @@ namespace DepotDownloader
                 }
             }
 
-            WriteToLog($"Manifest {depot.ManifestId} ({newProtoManifest.CreationTime})");
+            WriteToLog($"Manifest {depot.ManifestId} ({newManifest.CreationTime})");
 
             if (Config.DownloadManifestOnly)
             {
